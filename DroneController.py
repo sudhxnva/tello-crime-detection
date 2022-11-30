@@ -1,9 +1,9 @@
-from djitellopy import Tello
 import cv2
 import pygame
 import numpy as np
 import time
 from FaceRec import SimpleFaceRec
+from CrimeRecognition import predict
 
 # Speed of the drone
 S = 60
@@ -66,6 +66,10 @@ class DroneController(object):
                         cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 200), 2)
             cv2.rectangle(frame, (x1, y1),
                           (x2, y2), (0, 0, 200), 4)
+        prediction = predict(frame)
+        print("Prediction: ", prediction)
+        cv2.putText(frame, prediction, (5, 720 - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
     def run(self):
 
@@ -101,10 +105,10 @@ class DroneController(object):
 
             frame = frame_read.frame
 
-            # battery n.
-            text = "Battery: {}%".format(self.tello.get_battery())
-            cv2.putText(frame, text, (5, 720 - 5),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            # battery percentage (currently printing crime detection possibility in the same area)
+            # text = "Battery: {}%".format(self.tello.get_battery())
+            # cv2.putText(frame, text, (5, 720 - 5),
+            #             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
             self.analyze_frame(frame)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frame = np.rot90(frame)
@@ -116,7 +120,12 @@ class DroneController(object):
 
             time.sleep(1 / FPS)
 
+        print("Closing pygame...")
+        pygame.display.quit()
+        pygame.quit()
+
         # Call it always before finishing. To deallocate resources.
+        print("Ending drone session and deallocating resources...")
         self.tello.end()
 
     def keydown(self, key):
